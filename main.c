@@ -2,9 +2,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h> 
+#include <unistd.h>
 #include <ctype.h>
+#include <assert.h>
 
-char *read_from_file(const char *filename)
+
+// #define NROW 15
+#define NCOL 2
+
+
+// Will be used to remove the 'e'
+void removeChar(char* s, char c)
+{
+    int j, n = strlen(s);
+    for (int i = j = 0; i < n; i++)
+        if (s[i] != c)
+            s[j++] = s[i];
+ 
+    s[j] = '\0';
+}
+
+// Get only the part of the file we want
+char *preprocessing(const char *filename, char **nbEdges)
 {
     long int size = 0;
     FILE *file = fopen(filename, "r");
@@ -25,22 +44,45 @@ char *read_from_file(const char *filename)
         return NULL;
     }
 
-    if(fread(result, 1, size, file) != size) {
-        fputs("Read error.\n", stderr);
-        fclose(file);
-        return NULL;
+
+char *line = NULL;  
+size_t len = 0;
+ssize_t read;  
+const char * separator = " ";
+
+
+
+
+while ((read = getline(&line, &len, file)) != -1) {
+
+        if (strstr(line, "p edge ") == line){
+
+            // Get the last token of a string. Avoid using strtok
+            char *last = strrchr(line, ' ');
+            if (last != NULL) {
+                *nbEdges = last+1;
+            }
+
+            while ((read = getline(&line, &len, file)) != -1) {
+                // printf("%s",line);
+                strcat(result, line);
+        }
+        break; // we break the outer loop 
     }
+}
 
     fclose(file);
     return result;
 }
 
 
+
+
 int main(int argc, char **argv) 
 {
 
-    regex_t regex;
-    int pattern = regcomp(&regex, "p edge ", 0);
+    char *nbEdges;
+
 
     if(argc < 2) {
         fputs("Need an argument.\n", stderr);
@@ -48,20 +90,15 @@ int main(int argc, char **argv)
     }
 
     char *fileName = argv[1];
-    char *result = read_from_file(fileName);
-    //char *occurrence = strchr(result, getNext);
+    char *result = preprocessing(fileName, &nbEdges);
+    // printf("nb edges of the graph = %s", nbEdges);
 
-    int matching = regexec(&regex, result, 0, NULL, 0);
-    if(matching == 0){
-        printf("Pattern found.\n");
-    } else {
-        printf("Pattern not found.\n");
-    }
-
+    int getNbEdges = atoi(nbEdges);
 
     if(!result) return -1;
 
 
+    // in the fileName, reading number of nodes.
     int nbNodes = 0;
     char *str = fileName, *p = str;
     while (*p) { // Tant qu'il y a des caractères à traiter
@@ -76,10 +113,41 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("Found %d nodes.",nbNodes);
+    printf("Found %d nodes.\n",nbNodes);
 
-    //fputs(result, stdout);
-    free(result);
+    removeChar(result, 'e');
 
-    return 0;
-}
+  const char * separator = " ";
+  char * strToken;
+  char *outt;
+  char *end;
+  /* 1D array */
+
+  int nb_row = (getNbEdges/2);
+
+  int arrBuf[nb_row*NCOL];
+  /* 2D array */
+  int (*myArr)[NCOL] = (int(*)[NCOL])arrBuf;
+  int i;
+  outt = strdup(result);
+  /* Store numbers as 1D array */
+  strToken = strtok ( outt, separator );
+  for (i = 0; i < nb_row*NCOL && strToken != NULL ; i++) {
+    arrBuf[i] = (int)strtol(strToken, &end, 10);
+    strToken = strtok ( NULL, separator);
+  }
+  /* Display numbers as 2D array */
+  for (i = 0; i < nb_row; i++) {
+    printf("%d %d\n", myArr[i][0], myArr[i][1]);
+  }
+
+  // printf("CHECK: %d\n", myArr[9][1]);
+
+  free(outt);
+  free(result);
+
+  return 0;
+
+
+} // END MAIN
+
