@@ -6,6 +6,8 @@
 
 #define NCOL 2
 
+// N: number of nodes.
+// M: number of edges
 int N,M;
 const int true = 1;
 const int false = 0;
@@ -58,16 +60,16 @@ char *preprocessing(char *filename, char **nbEdges, char **nbE, int *nbNodes, in
     *nbE = &buffer[0];
 
 
-     // in the fileName, reading number of nodes.
+     // This allows us to read the number of nodes.
     char *str = filename, *p = str;
-    while (*p) { // Tant qu'il y a des caractères à traiter
+    while (*p) { // While there's still characters to process
         if ( isdigit(*p) || ( (*p=='-'||*p=='+') && isdigit(*(p+1)) )) {
-            // Si on rentre dans le if, on a trouvé un nombre
-            long val = strtol(p, &p, 10); // On lit le nombre
+            // We found a number 
+            long val = strtol(p, &p, 10); // We read the number
             *nbNodes = val;
             break;
         } else {
-            // Sinon on regarde le prochain caractère
+            // Otherwise we look at the next character
             p++;
         }
     }
@@ -115,6 +117,32 @@ char *preprocessing(char *filename, char **nbEdges, char **nbE, int *nbNodes, in
 }
 
 
+void arrayConstruction( int *nb_rows, int givenArr[][2], char *input )
+{
+    const char * separator = " ";
+    char * strToken;
+    char *outt;
+    int i;
+
+    outt = strdup(input);
+
+    strToken = strtok (outt, separator);
+
+    for (i = 0; i < *nb_rows && strToken != NULL; i++)
+    {
+        for (int j = 0; j < 2 && strToken != NULL; j++)
+        {
+            givenArr[i][j] = strtol(strToken, NULL, 10);
+            strToken = strtok(NULL, separator);
+        }
+    }
+    free(outt);
+
+    *nb_rows = i;
+
+}
+
+
 
 // Adj: Cr_GFK
 void createAdjMatrix(int Adj[][N+1], int arr[][2]) {
@@ -148,7 +176,7 @@ void showAdjMatrix(int Adj[][N + 1])
 }
 
 
-int isNeigbor(int Adj[][N+1], int site_a, int site_b){
+int isNeighbor(int Adj[][N+1], int site_a, int site_b){
     if (site_a > N || site_b > N){
         printf("Error: Greater than the number of nodes. Please give another try.\n");
         exit(EXIT_FAILURE);
@@ -190,53 +218,37 @@ int main(int argc, char **argv)
     removeChar(result, 'e');    
     int getNbEdges = atoi(nbEdges);
     int getNbE = atoi(nbE);
+    N = nbNodes;
+    M = nb_row; 
 
 
     printf("Found %d nodes.\n",nbNodes);
+    printf("Found %d edges.\n",nb_row);
 
 
-    const char * separator = " ";
-    char * strToken;
-    char *outt;
-    char *end;
-
-    /* 1D array */
-    int arrBuf[nb_row*NCOL];
-    /* 2D array */
-    int (*myArr)[NCOL] = (int(*)[NCOL])arrBuf;
-    int i;
-    outt = strdup(result);
-    /* Store numbers as 1D array */
-    strToken = strtok ( outt, separator );
-    for (i = 0; i < nb_row*NCOL && strToken != NULL ; i++) {
-    arrBuf[i] = (int)strtol(strToken, &end, 10);
-    strToken = strtok ( NULL, separator);
-    }
+    int arr[nb_row][2];
+    int len = sizeof arr / sizeof *arr;
+    arrayConstruction(&len, arr, result);
   
   /* Display numbers as 2D array */
+  // int i;
   // for (i = 0; i < nb_row; i++) {
-  //   printf("%d---%d\n", emptyArr[i][0], emptyArr[i][1]);
+  //   printf("%d---%d\n", arr[i][0], arr[i][1]);
   // }
-  /* Test - Check for a certain val in the full array */
-  // printf("CHECK: %d\n", myArr[9][1]);
-    
-
-    N = nbNodes;
-    M = nb_row; // M = # Edges
 
     // Adjacency matrix
     int Adj[N+1][N+1];
-    createAdjMatrix(Adj, myArr);
+    createAdjMatrix(Adj, arr);
     showAdjMatrix(Adj);
 
     /* Test - Check whether they are neighbors */
-    // int val = isNeigbor(Adj, 2, 3);
+    // int val = isNeighbor(Adj, 2, 3);
     // printf("----> %d\n", val);
 
-    // free(outt);
     free(result);
 
     return 0;
+
 } // END MAIN
 
 
