@@ -9,6 +9,9 @@
 #define NCOL 2
 
 int N,M;
+const int true = 1;
+const int false = 0;
+
 
 // Will be used to remove the 'e'
 void removeChar(char* s, char c) {
@@ -105,6 +108,7 @@ void createAdjMatrix(int Adj[][N+1], int arr[][2]) {
         Adj[x][y] = 1;
         Adj[y][x] = 1;
     }
+
 }
 
 
@@ -116,6 +120,28 @@ void showAdjMatrix(int Adj[][N + 1])
             printf("%d", Adj[i][j]);
         }
         printf("\n");
+    }
+}
+
+
+int isNeigbor(int Adj[][N+1], int site_a, int site_b){
+    if (site_a > N || site_b > N){
+        printf("Error: Greater than the number of nodes. Please give another try.\n");
+        exit(EXIT_FAILURE);
+    } 
+    if (site_a == 0 || site_b == 0){
+        printf("Error: A site can't be 0. It is at least 1. Please give another try.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int i = 1; i < site_a + 1; i++) {
+        for (int j = 1; j < site_b + 1; j++) {
+                if(i == site_a && j == site_b){
+                    if(Adj[i][j] == 1){
+                        return true;
+                    }
+                    return false;
+                }        
+        }
     }
 }
 
@@ -198,18 +224,21 @@ int main(int argc, char **argv)
   //   printf("%d---%d\n", myArr[i][0], myArr[i][1]);
   // }
 
-    /* Test - Check for a certain val */
+    /* Test - Check for a certain val in the full array */
   // printf("CHECK: %d\n", myArr[9][1]);
     
     N = nbNodes;
     M = nb_row; // M = # Edges
 
     // Adjacency matrix
-    int Adj[N + 1][N + 1];
-
-
+    int Adj[N+1][N+1];
     createAdjMatrix(Adj, myArr);
-    showAdjMatrix(Adj);
+
+    // showAdjMatrix(Adj);
+
+    /* Test - Check whether they are neighbors */
+    // int val = isNeigbor(Adj, 2, 3);
+    // printf("----> %d\n", val);
 
 
     free(outt);
