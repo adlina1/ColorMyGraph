@@ -11,8 +11,7 @@
 int N,M;
 
 // Will be used to remove the 'e'
-void removeChar(char* s, char c)
-{
+void removeChar(char* s, char c) {
     int j, n = strlen(s);
     for (int i = j = 0; i < n; i++)
         if (s[i] != c)
@@ -22,8 +21,8 @@ void removeChar(char* s, char c)
 }
 
 // Get only the part of the file we want
-char *preprocessing(const char *filename, char **nbEdges)
-{
+char *preprocessing(const char *filename, char **nbEdges, char **nbE) {
+
     long int size = 0;
     FILE *file = fopen(filename, "r");
     
@@ -44,17 +43,23 @@ char *preprocessing(const char *filename, char **nbEdges)
     }
 
 
-char *line = NULL;  
-size_t len = 0;
-ssize_t read;  
-const char * separator = " ";
+    char *line = NULL;  
+    size_t len = 0;
+    ssize_t read;  
+    const char * separator = " ";
+
+    regex_t regex;
+    int pattern = regcomp(&regex, "p col ", 0);
+    
+    // Will be used to store M for col graphs 
+    static char buffer[8];
+    // strcpy(*nbE, &buffer[0]);
+    *nbE = &buffer[0];
 
 
+    while ((read = getline(&line, &len, file)) != -1) {
 
-
-while ((read = getline(&line, &len, file)) != -1) {
-
-        if (strstr(line, "p edge ") == line){
+        if (strstr(line, "p edge ") == line || (strstr(line, "p col ") == line)){
 
             // Get the last token of a string. Avoid using strtok
             char *last = strrchr(line, ' ');
@@ -62,13 +67,18 @@ while ((read = getline(&line, &len, file)) != -1) {
                 *nbEdges = last+1;
             }
 
+            strcpy(buffer, *nbEdges);
+
             while ((read = getline(&line, &len, file)) != -1) {
                 // printf("%s",line);
                 strcat(result, line);
+            }
+            break; // we break the outer loop 
         }
-        break; // we break the outer loop 
+
     }
-}
+
+    printf("brr %s\n", *nbE);
 
     fclose(file);
     return result;
@@ -114,22 +124,17 @@ void showAdjMatrix(int Adj[][N + 1])
 int main(int argc, char **argv) 
 {
 
-    char *nbEdges;
-
-
     if(argc < 2) {
         fputs("Need an argument.\n", stderr);
         return -1;
-    }
+    } 
 
+    char *nbEdges;
+    char *nbE;
     char *fileName = argv[1];
-    char *result = preprocessing(fileName, &nbEdges);
-    // printf("nb edges of the graph = %s", nbEdges);
-
+    char *result = preprocessing(fileName, &nbEdges, &nbE);
     int getNbEdges = atoi(nbEdges);
-
-    if(!result) return -1;
-
+    int getNbE = atoi(nbE);
 
     // in the fileName, reading number of nodes.
     int nbNodes = 0;
@@ -156,7 +161,25 @@ int main(int argc, char **argv)
     char *end;
 
     /* 1D array */
-    int nb_row = (getNbEdges/2);
+    printf("%s\n",fileName);
+
+    int nb_row;
+
+    // If we are dealing with one of those two files, then we divide M by a factor of 2.
+    if (!strcmp(fileName, "Graphs/dsjc250.5.col") | !strcmp(fileName, "Graphs/dsjc500.9.col")){
+        nb_row = getNbEdges / 2;
+        printf("(1) nb edges : %d\n", nb_row);
+    } else {
+        if ((!strcmp(fileName, "Graphs/r250.5.col") | !strcmp(fileName, "Graphs/r1000.1c.col") | 
+            !strcmp(fileName, "Graphs/r1000.5.col") | !strcmp(fileName, "Graphs/C2000.5.col") |
+            !strcmp(fileName, "Graphs/C4000.5.col"))){
+            nb_row = getNbE;    
+        } else {
+            nb_row = getNbEdges;
+            printf("(2) nb edges : %d\n", nb_row); 
+        }
+               
+    }
 
     int arrBuf[nb_row*NCOL];
     /* 2D array */
