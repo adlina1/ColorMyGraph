@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h> 
-#include <unistd.h>
 #include <ctype.h>
-#include <assert.h>
 
 #define NCOL 2
 
@@ -24,7 +22,7 @@ void removeChar(char* s, char c) {
 }
 
 // Get only the part of the file we want
-char *preprocessing(const char *filename, char **nbEdges, char **nbE) {
+char *preprocessing(char *filename, char **nbEdges, char **nbE, int *nbNodes, int *nb_row) {
 
     long int size = 0;
     FILE *file = fopen(filename, "r");
@@ -60,6 +58,21 @@ char *preprocessing(const char *filename, char **nbEdges, char **nbE) {
     *nbE = &buffer[0];
 
 
+     // in the fileName, reading number of nodes.
+    char *str = filename, *p = str;
+    while (*p) { // Tant qu'il y a des caractères à traiter
+        if ( isdigit(*p) || ( (*p=='-'||*p=='+') && isdigit(*(p+1)) )) {
+            // Si on rentre dans le if, on a trouvé un nombre
+            long val = strtol(p, &p, 10); // On lit le nombre
+            *nbNodes = val;
+            break;
+        } else {
+            // Sinon on regarde le prochain caractère
+            p++;
+        }
+    }
+
+
     while ((read = getline(&line, &len, file)) != -1) {
 
         if (strstr(line, "p edge ") == line || (strstr(line, "p col ") == line)){
@@ -78,14 +91,29 @@ char *preprocessing(const char *filename, char **nbEdges, char **nbE) {
             }
             break; // we break the outer loop 
         }
-
     }
 
-    printf("brr %s\n", *nbE);
+    // If we are dealing with one of those two files, then we divide M by a factor of 2.
+    if (!strcmp(filename, "Graphs/dsjc250.5.col") | !strcmp(filename, "Graphs/dsjc500.9.col")){
+        *nb_row = atoi(*nbEdges) / 2;
+        printf("(1) nb edges : %d\n", *nb_row);
+    } else {
+        // Special treatment for these files (nbE)
+        if ((!strcmp(filename, "Graphs/r250.5.col") | !strcmp(filename, "Graphs/r1000.1c.col") | 
+            !strcmp(filename, "Graphs/r1000.5.col") | !strcmp(filename, "Graphs/C2000.5.col") |
+            !strcmp(filename, "Graphs/C4000.5.col"))){
+            *nb_row = atoi(*nbE); 
+            printf("(2) nb edges : %d\n", *nb_row);     
+        } else {
+            *nb_row = atoi(*nbEdges);
+            printf("(3) nb edges : %d\n", *nb_row); 
+        }            
+    } // end else
 
     fclose(file);
     return result;
 }
+
 
 
 // Adj: Cr_GFK
@@ -93,18 +121,14 @@ void createAdjMatrix(int Adj[][N+1], int arr[][2]) {
 
     // Intializing all values to 0
     for (int i=0; i<N+1; i++) {
-
         for (int j=0; j<N+1; j++) {
             Adj[i][j] = 0;
         }
     }
-
     // Creation of the adjacency matrix
     for (int i=0; i<M; i++) {
-
         int x = arr[i][0];
         int y = arr[i][1];
-
         Adj[x][y] = 1;
         Adj[y][x] = 1;
     }
@@ -155,31 +179,21 @@ int main(int argc, char **argv)
         return -1;
     } 
 
+    int nbNodes = 0;   
     char *nbEdges;
     char *nbE;
+    // real # of edges value
+    int nb_row; 
     char *fileName = argv[1];
-    char *result = preprocessing(fileName, &nbEdges, &nbE);
+    char *result = preprocessing(fileName, &nbEdges, &nbE, &nbNodes, &nb_row);
+    // Call of removeChar function
+    removeChar(result, 'e');    
     int getNbEdges = atoi(nbEdges);
     int getNbE = atoi(nbE);
 
-    // in the fileName, reading number of nodes.
-    int nbNodes = 0;
-    char *str = fileName, *p = str;
-    while (*p) { // Tant qu'il y a des caractères à traiter
-        if ( isdigit(*p) || ( (*p=='-'||*p=='+') && isdigit(*(p+1)) )) {
-            // Si on rentre dans le if, on a trouvé un nombre
-            long val = strtol(p, &p, 10); // On lit le nombre
-            nbNodes = val;
-            break;
-        } else {
-            // Sinon on regarde le prochain caractère
-            p++;
-        }
-    }
 
     printf("Found %d nodes.\n",nbNodes);
 
-    removeChar(result, 'e');
 
     const char * separator = " ";
     char * strToken;
@@ -187,26 +201,6 @@ int main(int argc, char **argv)
     char *end;
 
     /* 1D array */
-    printf("%s\n",fileName);
-
-    int nb_row;
-
-    // If we are dealing with one of those two files, then we divide M by a factor of 2.
-    if (!strcmp(fileName, "Graphs/dsjc250.5.col") | !strcmp(fileName, "Graphs/dsjc500.9.col")){
-        nb_row = getNbEdges / 2;
-        printf("(1) nb edges : %d\n", nb_row);
-    } else {
-        if ((!strcmp(fileName, "Graphs/r250.5.col") | !strcmp(fileName, "Graphs/r1000.1c.col") | 
-            !strcmp(fileName, "Graphs/r1000.5.col") | !strcmp(fileName, "Graphs/C2000.5.col") |
-            !strcmp(fileName, "Graphs/C4000.5.col"))){
-            nb_row = getNbE;    
-        } else {
-            nb_row = getNbEdges;
-            printf("(2) nb edges : %d\n", nb_row); 
-        }
-               
-    }
-
     int arrBuf[nb_row*NCOL];
     /* 2D array */
     int (*myArr)[NCOL] = (int(*)[NCOL])arrBuf;
@@ -221,32 +215,28 @@ int main(int argc, char **argv)
   
   /* Display numbers as 2D array */
   // for (i = 0; i < nb_row; i++) {
-  //   printf("%d---%d\n", myArr[i][0], myArr[i][1]);
+  //   printf("%d---%d\n", emptyArr[i][0], emptyArr[i][1]);
   // }
-
-    /* Test - Check for a certain val in the full array */
+  /* Test - Check for a certain val in the full array */
   // printf("CHECK: %d\n", myArr[9][1]);
     
+
     N = nbNodes;
     M = nb_row; // M = # Edges
 
     // Adjacency matrix
     int Adj[N+1][N+1];
     createAdjMatrix(Adj, myArr);
-
-    // showAdjMatrix(Adj);
+    showAdjMatrix(Adj);
 
     /* Test - Check whether they are neighbors */
     // int val = isNeigbor(Adj, 2, 3);
     // printf("----> %d\n", val);
 
-
-    free(outt);
+    // free(outt);
     free(result);
 
     return 0;
-
-
 } // END MAIN
 
 
