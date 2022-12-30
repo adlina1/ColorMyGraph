@@ -54,7 +54,7 @@ int main(int argc, char const* argv[])
 	Node neighbors[num_neighbors];
 	
 	if(argc < 2){
-		printf("Usage : %s ip address\n", argv[0]);
+		printf("Usage : %s Enter server ip address\n", argv[0]);
 		exit(1);
 	} 
 	

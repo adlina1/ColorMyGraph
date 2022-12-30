@@ -9,11 +9,10 @@ This project contains various steps:
 
 
 ## Choices of implementation
-The best way for us to implement this problem has been to choose a Peer to Peer model, where each node is both client and server. This way, at any time, if two processes are neighbors then they will be able to communicate to each other. Another solution, this time thought with the client server model, would have been to designate a certain number of servers between all processes of the graph and make the other ones that are their neigbors, clients, and connect to them. The main inconvenient in this solution is that the communication channel would have been unidirectional, i.e at any time, both neighbors sites can't initiate the communication but only the client. In other words, the processes designated as servers would not be able to communicate without the client first sending a message/request. That's why the P2P model have been more suitable for this kind of problem.
+The best way for us to implement this problem has been to choose a Peer to Peer model, where each node is both client and server. This way, at any time, if two processes are neighbors then they will be able to communicate to each other. Another solution, this time thought with the client server model, would have been to designate a certain number of servers between all processes of the graph and make the other ones that are their neigbors, clients, and connect to them. The main inconvenient in this solution is that the communication channel would have been unidirectional, i.e at any time, both neighbors sites can't initiate the communication but only the client. In other words, the processes designated as servers would not be able to communicate without the client first sending a message/request. That's why the P2P model have been more suitable for this kind of problem. We have implemented a central server, and when the nodes have all registered with it, the server (directory) will respond to them one by one by sending the list of addresses of their neighbors so that they can communicate with them
 
 ## Technologies used
 * Sockets
-* Threads
 * Multiplexing
 
 ## How to use it
